@@ -1,0 +1,13 @@
+{
+  "name": "FitTrack - Workout, Steps & Heart Rate PWA",
+  "description": "Mobile-first PWA tracking steps via DeviceMotion peak detection, live heart rate via BLE & camera PPG, calories with MET & Keytel formulas, and workout history.",
+  "requestFramePermissions": [
+    "camera",
+    "accelerometer",
+    "gyroscope",
+    "bluetooth"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
