@@ -2,26 +2,26 @@
 
 @layer base {
   :root {
-    --color-bg-base: #07090e;
-    --color-surface-card: #0e1117;
-    --color-surface-elevated: #151922;
-    --color-border-subtle: #1c2230;
-    --color-border-hover: #2a3449;
+    --color-bg-base: #090d16;
+    --color-surface-card: #0f172a;
+    --color-surface-elevated: #1a2236;
+    --color-border-subtle: #1e293b;
+    --color-border-hover: #334155;
     --color-accent-volt: #10b981;
     --color-accent-heart: #f43f5e;
     --color-accent-calorie: #f59e0b;
-    --color-accent-pace: #38bdf8;
+    --color-accent-pace: #0ea5e9;
   }
 
   html {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    background-color: #07090e;
+    background-color: #090d16;
   }
 
   body {
-    background-color: #07090e;
+    background-color: #090d16;
     color: #f1f5f9;
     overflow-x: hidden;
   }
@@ -40,7 +40,7 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #07090e;
+  background: #090d16;
 }
 
 ::-webkit-scrollbar-thumb {

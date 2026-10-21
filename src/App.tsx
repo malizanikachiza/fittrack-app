@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Header } from './components/Header';
 import { HeartRateModal } from './components/HeartRateModal';
 import { HistoryTab } from './components/HistoryTab';
@@ -18,6 +18,7 @@ import { useBluetoothHeartRate } from './hooks/useBluetoothHeartRate';
 import { useCalorieBurn } from './hooks/useCalorieBurn';
 import { useCameraPPG } from './hooks/useCameraPPG';
 import { useDeviceMotion } from './hooks/useDeviceMotion';
+import { useLocationTracker } from './hooks/useLocationTracker';
 import { useUserProfile } from './hooks/useUserProfile';
 import { useWakeLock } from './hooks/useWakeLock';
 import { useWorkoutHistory } from './hooks/useWorkoutHistory';
@@ -33,6 +34,14 @@ export default function App() {
   const [hrSource, setHrSource] = useState<'none' | 'bluetooth' | 'camera'>('none');
   const [isHrModalOpen, setIsHrModalOpen] = useState<boolean>(false);
   const [finishedSession, setFinishedSession] = useState<WorkoutSession | null>(null);
+  const [isQuotaExceeded, setIsQuotaExceeded] = useState<boolean>(false);
+
+  // Google Maps Quota Listener
+  useEffect(() => {
+    const handleQuota = () => setIsQuotaExceeded(true);
+    window.addEventListener('gmp-quota-exceeded', handleQuota);
+    return () => window.removeEventListener('gmp-quota-exceeded', handleQuota);
+  }, []);
 
   // Persistent user profile
   const { profile, updateProfile, resetProfile } = useUserProfile();
@@ -40,6 +49,9 @@ export default function App() {
   // Hardware and Sensor Hooks
   const bluetoothState = useBluetoothHeartRate();
   const cameraPPGState = useCameraPPG();
+
+  // GPS Location & Route Tracing
+  const locationTracker = useLocationTracker(isWorkoutActive && !isPaused);
 
   // Determine active BPM based on selected heart rate source
   const activeBpm =
@@ -70,7 +82,7 @@ export default function App() {
   // Step detection with DeviceMotion API
   const motionState = useDeviceMotion(
     profile.heightCm,
-    'walking', // default, activity hook will guide cadence/variance
+    'walking',
     isWorkoutActive && !isPaused
   );
 
@@ -145,13 +157,13 @@ export default function App() {
 
   // Controls
   const handleStartWorkout = async () => {
-    // Request iOS motion permission if needed
     if (motionState.permissionState === 'prompt') {
       await motionState.requestPermission();
     }
 
     motionState.resetSteps();
     calorieState.resetCalories();
+    locationTracker.resetRoute();
     setElapsedSeconds(0);
     setWorkoutStartTime(Date.now());
     setWorkoutHrSamples([]);
@@ -183,6 +195,11 @@ export default function App() {
       maxBpm = Math.max(...validSamples.map((s) => s.bpm));
     }
 
+    const effectiveDistanceMeters =
+      locationTracker.gpsDistanceMeters > 0
+        ? locationTracker.gpsDistanceMeters
+        : motionState.distanceMeters;
+
     const session: WorkoutSession = {
       id: `session-${Date.now()}`,
       startTime: workoutStartTime || Date.now() - duration * 1000,
@@ -191,12 +208,13 @@ export default function App() {
       activityType: activityState.currentActivity,
       steps: motionState.steps,
       cadence: motionState.cadence,
-      distanceMeters: motionState.distanceMeters,
+      distanceMeters: effectiveDistanceMeters,
       calories: Math.round(calorieState.totalCalories),
       calorieCalculationMethod: calorieState.activeMethod,
       avgBpm,
       maxBpm,
       heartRateSamples: validSamples,
+      routePath: locationTracker.routePath.length > 1 ? locationTracker.routePath : undefined,
     };
 
     setIsWorkoutActive(false);
@@ -215,7 +233,7 @@ export default function App() {
   };
 
   // Filter today's completed sessions
-  const todaySessions = React.useMemo(() => {
+  const todaySessions = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayMs = today.getTime();
@@ -223,15 +241,38 @@ export default function App() {
   }, [sessions]);
 
   // Weekly data including live tracking
+  const effectiveLiveDistance =
+    locationTracker.gpsDistanceMeters > 0
+      ? locationTracker.gpsDistanceMeters
+      : motionState.distanceMeters;
+
   const weeklyData = getWeeklyData(
     isWorkoutActive ? motionState.steps : 0,
     isWorkoutActive ? calorieState.totalCalories : 0
   );
 
   return (
-    <div className="min-h-screen bg-[#07090e] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
+    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
       {/* Offline Alert */}
       <OfflineIndicator />
+
+      {/* Google Maps Quota Exceeded Sticky Banner */}
+      {isQuotaExceeded && (
+        <div className="bg-amber-500/15 border-b border-amber-500/30 text-amber-300 px-4 py-2.5 text-xs text-center sticky top-0 z-50 shadow-sm">
+          <span>
+            Google Maps Platform quota reached. If you are the app owner, visit{' '}
+            <a
+              href="https://developers.google.com/maps/ai/ai-studio?utm_campaign=gmp_mcp_codeassist_v1_aistudio#quota_exceeded_errors"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-semibold text-amber-200 hover:text-white"
+            >
+              maps developer site
+            </a>{' '}
+            for instructions to update your account.
+          </span>
+        </div>
+      )}
 
       {/* Top Header */}
       <Header
@@ -248,7 +289,7 @@ export default function App() {
             liveSteps={isWorkoutActive ? motionState.steps : 0}
             liveCalories={isWorkoutActive ? calorieState.totalCalories : 0}
             liveDurationSeconds={isWorkoutActive ? elapsedSeconds : 0}
-            liveDistanceMeters={isWorkoutActive ? motionState.distanceMeters : 0}
+            liveDistanceMeters={isWorkoutActive ? effectiveLiveDistance : 0}
             isWorkoutActive={isWorkoutActive}
             todaySessions={todaySessions}
             onStartWorkout={handleStartWorkout}
@@ -271,6 +312,7 @@ export default function App() {
             bluetoothState={bluetoothState}
             cameraPPGState={cameraPPGState}
             calorieState={calorieState}
+            locationTracker={locationTracker}
             hrSource={hrSource}
             onOpenHeartRateModal={() => setIsHrModalOpen(true)}
             rollingHrData={rollingHrData}

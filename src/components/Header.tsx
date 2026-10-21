@@ -14,25 +14,25 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenWorkoutTab,
 }) => {
   return (
-    <header className="sticky top-0 z-30 bg-[#07090e]/90 backdrop-blur-md border-b border-[#1c2230] px-4 py-3">
-      <div className="max-w-md lg:max-w-2xl mx-auto flex items-center justify-between">
+    <header className="sticky top-0 z-30 bg-[#090d16]/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+      <div className="max-w-md lg:max-w-xl mx-auto flex items-center justify-between">
         {/* Brand Zone */}
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-sm">
             <Activity className="w-4 h-4 stroke-[2.5]" />
           </div>
           <span className="font-extrabold tracking-tight text-white text-base">FitTrack</span>
         </div>
 
         {/* Right Status Affordances */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Active Workout indicator */}
           {isWorkoutActive && (
             <button
               onClick={onOpenWorkoutTab}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-500/10 border border-rose-500/25 text-rose-400 text-xs font-semibold hover:bg-rose-500/20 transition cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/25 transition cursor-pointer shadow-sm"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>Session Active</span>
             </button>
           )}
@@ -40,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Screen Wake Lock subtle indicator */}
           {isWakeLocked && (
             <span
-              className="flex items-center gap-1 text-[11px] text-slate-400"
+              className="flex items-center gap-1 text-[11px] text-slate-400 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800"
               title="Screen Wake Lock is active"
             >
               <Eye className="w-3.5 h-3.5 text-slate-400" />

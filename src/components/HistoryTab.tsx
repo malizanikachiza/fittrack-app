@@ -8,6 +8,8 @@ import {
   Flame,
   Footprints,
   Heart,
+  MapPin,
+  Navigation,
   RefreshCw,
   Trash2,
 } from 'lucide-react';
@@ -22,23 +24,20 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { ActivityType, UserProfile, WorkoutSession } from '../types/fitness';
+import { ActivityType, UserProfile, WeeklyDayData, WorkoutSession } from '../types/fitness';
 import { formatDuration } from '../utils/formulas';
+import { WorkoutMap } from './WorkoutMap';
 
 interface HistoryTabProps {
   sessions: WorkoutSession[];
-  weeklyData: {
-    day: string;
-    fullDate: string;
-    steps: number;
-    calories: number;
-    activeMinutes: number;
-  }[];
+  weeklyData: WeeklyDayData[];
   profile: UserProfile;
   onDeleteSession: (id: string) => void;
   onClearAll: () => void;
   onLoadSamples: () => void;
 }
+
+type MetricType = 'steps' | 'calories' | 'activeMinutes';
 
 export const HistoryTab: React.FC<HistoryTabProps> = ({
   sessions,
@@ -48,28 +47,17 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
   onClearAll,
   onLoadSamples,
 }) => {
-  const [activeMetric, setActiveMetric] = useState<'steps' | 'calories' | 'activeMinutes'>('steps');
+  const [activeMetric, setActiveMetric] = useState<MetricType>('steps');
   const [filterType, setFilterType] = useState<ActivityType | 'all'>('all');
+  const [expandedMapId, setExpandedMapId] = useState<string | null>(null);
 
-  const metricConfig = {
-    steps: {
-      label: 'Steps',
-      unit: 'steps',
-      color: '#10b981',
-      icon: Footprints,
-    },
-    calories: {
-      label: 'Calories',
-      unit: 'kcal',
-      color: '#f59e0b',
-      icon: Flame,
-    },
-    activeMinutes: {
-      label: 'Active Minutes',
-      unit: 'min',
-      color: '#38bdf8',
-      icon: Clock,
-    },
+  const metricConfig: Record<
+    MetricType,
+    { label: string; unit: string; color: string }
+  > = {
+    steps: { label: 'Steps', unit: 'steps', color: '#10b981' },
+    calories: { label: 'Calories', unit: 'kcal', color: '#f59e0b' },
+    activeMinutes: { label: 'Active Time', unit: 'min', color: '#0ea5e9' },
   };
 
   const currentMetric = metricConfig[activeMetric];
@@ -90,14 +78,14 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
       {/* Title */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Workout History</h1>
+          <h1 className="text-xl font-extrabold text-white tracking-tight">Workout History</h1>
           <p className="text-xs text-slate-400">Weekly progress & logged workouts</p>
         </div>
 
         {sessions.length === 0 && (
           <button
             onClick={onLoadSamples}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#151922] hover:bg-[#1c2230] text-emerald-400 border border-[#1c2230] text-xs font-semibold transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-emerald-400 border border-slate-700 text-xs font-semibold transition cursor-pointer shadow-sm"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Load Samples</span>
@@ -106,7 +94,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
       </div>
 
       {/* Weekly Charts Card */}
-      <div className="p-5 rounded-2xl bg-[#0e1117] border border-[#1c2230] space-y-4 shadow-xl">
+      <div className="p-5 rounded-2xl bg-[#0f172a] border border-slate-800 space-y-4 shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="text-xs font-medium text-slate-400">
@@ -127,7 +115,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
           </div>
 
           {/* Metric Selector Tabs */}
-          <div className="flex p-1 rounded-xl bg-[#151922] border border-[#1c2230] text-xs font-medium self-start sm:self-auto">
+          <div className="flex p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs font-medium self-start sm:self-auto">
             {(['steps', 'calories', 'activeMinutes'] as const).map((m) => {
               const isSelected = activeMetric === m;
               return (
@@ -136,7 +124,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
                   onClick={() => setActiveMetric(m)}
                   className={`px-3 py-1.5 rounded-lg transition text-xs cursor-pointer ${
                     isSelected
-                      ? 'bg-[#0e1117] text-white shadow-sm border border-[#2a3449] font-semibold'
+                      ? 'bg-slate-800 text-white shadow-sm border border-slate-700 font-semibold'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -151,14 +139,14 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
         <div className="h-44 w-full pt-1">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeklyData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1c2230" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
               <XAxis dataKey="day" stroke="#64748b" fontSize={11} tickLine={false} />
               <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#0e1117',
-                  borderColor: '#1c2230',
-                  borderRadius: '0.5rem',
+                  backgroundColor: '#090d16',
+                  borderColor: '#334155',
+                  borderRadius: '0.75rem',
                   fontSize: '11px',
                   color: '#fff',
                 }}
@@ -174,7 +162,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
                 {weeklyData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={index === weeklyData.length - 1 ? currentMetric.color : '#1f242e'}
+                    fill={index === weeklyData.length - 1 ? currentMetric.color : '#1e293b'}
                   />
                 ))}
               </Bar>
@@ -183,30 +171,44 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex items-center justify-between px-1">
-        <span className="text-xs font-semibold text-slate-400">
-          All Sessions ({filteredSessions.length})
-        </span>
+      {/* Filter and Sessions Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
+        <div className="flex items-center gap-2">
+          <Filter className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-xs font-bold text-white uppercase tracking-wider">
+            Logged Workouts ({filteredSessions.length})
+          </span>
+        </div>
 
-        <div className="flex gap-1">
-          {(['all', 'walking', 'running', 'gym'] as const).map((type) => (
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+          {(['all', 'walking', 'running', 'gym'] as const).map((t) => (
             <button
-              key={type}
-              onClick={() => setFilterType(type)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium capitalize transition cursor-pointer ${
-                filterType === type
-                  ? 'bg-[#151922] text-white border border-[#2a3449]'
-                  : 'text-slate-400 hover:text-slate-200'
+              key={t}
+              onClick={() => setFilterType(t)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer capitalize ${
+                filterType === t
+                  ? 'bg-slate-800 text-emerald-400 border border-slate-700 font-semibold'
+                  : 'bg-[#0f172a] text-slate-400 border border-slate-800 hover:text-slate-200'
               }`}
             >
-              {type}
+              {t}
             </button>
           ))}
+
+          {sessions.length > 0 && (
+            <button
+              onClick={onClearAll}
+              className="px-2 py-1 text-slate-500 hover:text-rose-400 text-xs transition cursor-pointer ml-1"
+              title="Clear all sessions"
+            >
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Clean Sessions List */}
+      {/* Sessions List */}
       {filteredSessions.length > 0 ? (
         <div className="space-y-2.5">
           {filteredSessions.map((session) => {
@@ -218,32 +220,34 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
             return (
               <div
                 key={session.id}
-                className="p-4 rounded-xl bg-[#0e1117] border border-[#1c2230] hover:border-[#2a3449] transition space-y-2"
+                className="p-4 rounded-2xl bg-[#0f172a] border border-slate-800 space-y-3 shadow-sm hover:border-slate-700 transition"
               >
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#151922] border border-[#1c2230] flex items-center justify-center text-slate-200">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-200">
                       {session.activityType === 'running' ? (
-                        <Activity className="w-4 h-4" />
+                        <Activity className="w-5 h-5 text-emerald-400" />
                       ) : session.activityType === 'gym' ? (
-                        <Dumbbell className="w-4 h-4" />
+                        <Dumbbell className="w-5 h-5 text-amber-400" />
                       ) : (
-                        <Footprints className="w-4 h-4" />
+                        <Footprints className="w-5 h-5 text-emerald-400" />
                       )}
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-white capitalize">
+                      <div className="text-sm font-bold text-white capitalize">
                         {session.activityType} Workout
                       </div>
-                      <div className="text-[11px] text-slate-400 flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
+                      <div className="text-xs text-slate-400 flex items-center gap-1.5 font-mono">
+                        <Calendar className="w-3 h-3 text-slate-500" />
                         <span>
                           {new Date(session.startTime).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',
-                          })}{' '}
-                          at{' '}
+                          })}
+                        </span>
+                        <span className="text-slate-600">·</span>
+                        <Clock className="w-3 h-3 text-slate-500" />
+                        <span>
                           {new Date(session.startTime).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -255,7 +259,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
 
                   <button
                     onClick={() => onDeleteSession(session.id)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-[#151922] transition cursor-pointer"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition cursor-pointer"
                     title="Delete session"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -263,7 +267,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
                 </div>
 
                 {/* Clean inline metrics with typographic separators */}
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-300 font-mono pt-1 border-t border-[#1c2230]">
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-300 font-mono pt-1 border-t border-slate-800">
                   <span>{formatDuration(session.durationSeconds)}</span>
                   <span className="text-slate-600">·</span>
                   <span>{session.steps.toLocaleString()} steps</span>
@@ -284,44 +288,49 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
 
                 {/* Optional Note */}
                 {session.note && (
-                  <p className="text-xs text-slate-400 italic bg-[#07090e] p-2 rounded-lg border border-[#1c2230]">
+                  <p className="text-xs text-slate-400 italic bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
                     "{session.note}"
                   </p>
+                )}
+
+                {/* Traced Route Map Expander */}
+                {session.routePath && session.routePath.length > 1 && (
+                  <div className="pt-1">
+                    <button
+                      onClick={() => setExpandedMapId(expandedMapId === session.id ? null : session.id)}
+                      className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 font-medium transition cursor-pointer"
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>{expandedMapId === session.id ? 'Hide Traced Map' : 'View Traced Map'}</span>
+                    </button>
+                    {expandedMapId === session.id && (
+                      <div className="mt-2 rounded-2xl overflow-hidden border border-slate-800">
+                        <WorkoutMap
+                          currentLocation={session.routePath[session.routePath.length - 1]}
+                          routePath={session.routePath}
+                          accuracy={null}
+                          speed={null}
+                          isTracking={false}
+                          isSimulating={false}
+                          onStartSimulation={() => {}}
+                          onStopSimulation={() => {}}
+                          className="h-44 sm:h-52"
+                        />
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             );
           })}
         </div>
       ) : (
-        <div className="p-8 rounded-xl bg-[#0e1117] border border-dashed border-[#1c2230] text-center space-y-3">
+        <div className="p-8 rounded-2xl bg-[#0f172a] border border-dashed border-slate-800 text-center space-y-3">
           <BarChart2 className="w-8 h-8 text-slate-600 mx-auto" />
           <div className="text-sm font-semibold text-slate-300">No workout records found</div>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            Complete a workout on the Workout tab or load sample workouts to explore your weekly charts.
+            Complete a workout or tap "Load Samples" above to view charts and statistics.
           </p>
-          <button
-            onClick={onLoadSamples}
-            className="px-4 py-2 rounded-lg bg-[#151922] hover:bg-[#1c2230] text-emerald-400 border border-[#1c2230] text-xs font-semibold transition inline-flex items-center gap-2 cursor-pointer"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Load Sample Workout History</span>
-          </button>
-        </div>
-      )}
-
-      {/* Clear All Footer */}
-      {sessions.length > 0 && (
-        <div className="pt-2 text-center">
-          <button
-            onClick={() => {
-              if (window.confirm('Are you sure you want to clear all workout history?')) {
-                onClearAll();
-              }
-            }}
-            className="text-xs text-slate-500 hover:text-rose-400 transition cursor-pointer"
-          >
-            Clear All Workout Records
-          </button>
         </div>
       )}
     </div>

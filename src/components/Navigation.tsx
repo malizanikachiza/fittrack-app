@@ -22,8 +22,8 @@ export const Navigation: React.FC<NavigationProps> = ({
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#07090e]/95 backdrop-blur-xl border-t border-[#1c2230] px-4 pt-1.5 pb-[max(0.6rem,env(safe-area-inset-bottom))] shadow-2xl">
-      <div className="max-w-md lg:max-w-2xl mx-auto flex items-center justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#090d16]/95 backdrop-blur-xl border-t border-slate-800 px-4 pt-1.5 pb-[max(0.6rem,env(safe-area-inset-bottom))] shadow-2xl">
+      <div className="max-w-md lg:max-w-xl mx-auto flex items-center justify-around">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -63,9 +63,9 @@ export const Navigation: React.FC<NavigationProps> = ({
                 {tab.label}
               </span>
 
-              {/* Minimal active bottom tick */}
+              {/* Minimal active bottom indicator pill */}
               {isActive && (
-                <span className="absolute bottom-0.5 w-4 h-0.5 rounded-full bg-emerald-400" />
+                <span className="absolute bottom-0.5 w-5 h-0.5 rounded-full bg-emerald-400" />
               )}
             </button>
           );

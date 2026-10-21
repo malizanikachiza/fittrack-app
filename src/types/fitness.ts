@@ -36,6 +36,7 @@ export interface WorkoutSession {
   maxBpm: number | null;
   heartRateSamples: { timestamp: number; bpm: number }[];
   note?: string;
+  routePath?: { lat: number; lng: number }[];
 }
 
 export type HRSource = 'none' | 'bluetooth' | 'camera';
@@ -46,4 +47,12 @@ export interface DailySummary {
   calories: number;
   activeMinutes: number;
   distanceKm: number;
+}
+
+export interface WeeklyDayData {
+  day: string;
+  fullDate: string;
+  steps: number;
+  calories: number;
+  activeMinutes: number;
 }

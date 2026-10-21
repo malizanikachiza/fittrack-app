@@ -70,7 +70,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
       {/* Date Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Today's Activity</h1>
+          <h1 className="text-xl font-extrabold text-white tracking-tight">Today's Activity</h1>
           <p className="text-xs text-slate-400">
             {new Date().toLocaleDateString(undefined, {
               weekday: 'long',
@@ -83,15 +83,15 @@ export const TodayTab: React.FC<TodayTabProps> = ({
         {isWorkoutActive ? (
           <button
             onClick={() => onSelectTab('workout')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold cursor-pointer shadow-sm hover:bg-emerald-500/20 transition"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>Active Workout</span>
           </button>
         ) : (
           <button
             onClick={onStartWorkout}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-slate-950 text-xs font-bold transition shadow-md shadow-emerald-500/15 cursor-pointer"
           >
             <Play className="w-3.5 h-3.5 fill-slate-950" />
             <span>Start</span>
@@ -100,7 +100,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
       </div>
 
       {/* Dual Concentric Progress Ring Card */}
-      <div className="p-6 rounded-2xl bg-[#0e1117] border border-[#1c2230] shadow-xl flex flex-col items-center sm:flex-row justify-around gap-6">
+      <div className="p-6 rounded-2xl bg-[#0f172a] border border-slate-800 shadow-xl flex flex-col items-center sm:flex-row justify-around gap-6">
         {/* Concentric Progress Rings */}
         <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
           <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 160 160">
@@ -109,7 +109,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
               cx="80"
               cy="80"
               r={radius}
-              stroke="#151922"
+              stroke="#1e293b"
               strokeWidth="11"
               fill="transparent"
             />
@@ -131,7 +131,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
               cx="80"
               cy="80"
               r={innerRadius}
-              stroke="#151922"
+              stroke="#1e293b"
               strokeWidth="10"
               fill="transparent"
             />
@@ -164,7 +164,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
         {/* Breakdown Stats */}
         <div className="w-full sm:w-auto flex-1 space-y-2.5">
           {/* Steps Progress Row */}
-          <div className="p-3 rounded-xl bg-[#151922] border border-[#1c2230] flex items-center justify-between">
+          <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
               <div>
@@ -187,7 +187,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
           </div>
 
           {/* Calorie Progress Row */}
-          <div className="p-3 rounded-xl bg-[#151922] border border-[#1c2230] flex items-center justify-between">
+          <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
               <div>
@@ -213,8 +213,8 @@ export const TodayTab: React.FC<TodayTabProps> = ({
 
       {/* Secondary Metrics Summary Row */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="p-4 rounded-2xl bg-[#0e1117] border border-[#1c2230] space-y-1">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+        <div className="p-4 rounded-2xl bg-[#0f172a] border border-slate-800 space-y-1 shadow-md">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
             <Clock className="w-3.5 h-3.5 text-slate-400" />
             <span>Active Time</span>
           </div>
@@ -226,8 +226,8 @@ export const TodayTab: React.FC<TodayTabProps> = ({
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#0e1117] border border-[#1c2230] space-y-1">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+        <div className="p-4 rounded-2xl bg-[#0f172a] border border-slate-800 space-y-1 shadow-md">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
             <Navigation className="w-3.5 h-3.5 text-slate-400" />
             <span>Estimated Distance</span>
           </div>
@@ -241,20 +241,20 @@ export const TodayTab: React.FC<TodayTabProps> = ({
       </div>
 
       {/* Quick Launch Workout CTA Card */}
-      <div className="p-4 rounded-2xl bg-[#0e1117] border border-[#1c2230] hover:border-[#2a3449] transition flex items-center justify-between">
+      <div className="p-4 rounded-2xl bg-[#0f172a] border border-slate-800 hover:border-slate-700 transition flex items-center justify-between shadow-md">
         <div className="space-y-0.5 pr-3">
           <div className="text-sm font-bold text-white">
-            Start a Workout
+            Ready to Move?
           </div>
           <p className="text-xs text-slate-400">
-            Live cadence, heart rate via BLE/camera & calories
+            Live GPS route tracking, cadence, heart rate & calories
           </p>
         </div>
         <button
           onClick={onStartWorkout}
-          className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shrink-0 flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-slate-950 font-bold text-xs shrink-0 flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-md shadow-emerald-500/20"
         >
-          <span>Start</span>
+          <span>Start Now</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -281,16 +281,16 @@ export const TodayTab: React.FC<TodayTabProps> = ({
             {todaySessions.map((session) => (
               <div
                 key={session.id}
-                className="p-3.5 rounded-xl bg-[#0e1117] border border-[#1c2230] flex items-center justify-between"
+                className="p-3.5 rounded-xl bg-[#0f172a] border border-slate-800 flex items-center justify-between shadow-sm"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#151922] border border-[#1c2230] flex items-center justify-center text-slate-300">
+                  <div className="w-9 h-9 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-200">
                     {session.activityType === 'running' ? (
-                      <Activity className="w-4 h-4 text-slate-200" />
+                      <Activity className="w-4 h-4 text-emerald-400" />
                     ) : session.activityType === 'gym' ? (
-                      <Dumbbell className="w-4 h-4 text-slate-200" />
+                      <Dumbbell className="w-4 h-4 text-amber-400" />
                     ) : (
-                      <Footprints className="w-4 h-4 text-slate-200" />
+                      <Footprints className="w-4 h-4 text-emerald-400" />
                     )}
                   </div>
                   <div>
@@ -317,7 +317,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
             ))}
           </div>
         ) : (
-          <div className="p-6 rounded-xl bg-[#0e1117] border border-dashed border-[#1c2230] text-center text-slate-500 text-xs">
+          <div className="p-6 rounded-xl bg-[#0f172a] border border-dashed border-slate-800 text-center text-slate-500 text-xs">
             No completed workouts today yet. Start one above to fill your rings!
           </div>
         )}
