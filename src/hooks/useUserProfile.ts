@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { getIDBProfile, saveIDBProfile } from '../services/indexedDb';
 import { UserProfile } from '../types/fitness';
 
-const DEFAULT_PROFILE: UserProfile = {
+export const DEFAULT_PROFILE: UserProfile = {
   age: 28,
   sex: 'male',
   heightCm: 175,
@@ -27,11 +28,29 @@ export function useUserProfile() {
     return DEFAULT_PROFILE;
   });
 
+  // On mount, check if IndexedDB has newer profile
+  useEffect(() => {
+    let isMounted = true;
+    getIDBProfile().then((idbProf) => {
+      if (isMounted && idbProf) {
+        setProfile((prev) => ({ ...prev, ...idbProf }));
+      } else if (isMounted) {
+        // Seed IndexedDB with current profile
+        saveIDBProfile(profile);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Save to both IndexedDB and localStorage whenever profile changes
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+      saveIDBProfile(profile);
     } catch (e) {
-      console.warn('Failed to save user profile to localStorage:', e);
+      console.warn('Failed to save user profile:', e);
     }
   }, [profile]);
 
@@ -43,9 +62,14 @@ export function useUserProfile() {
     setProfile(DEFAULT_PROFILE);
   };
 
+  const hydrateProfile = (newProfile: UserProfile) => {
+    setProfile(newProfile);
+  };
+
   return {
     profile,
     updateProfile,
     resetProfile,
+    hydrateProfile,
   };
 }

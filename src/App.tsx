@@ -13,6 +13,7 @@ import { ProfileTab } from './components/ProfileTab';
 import { SessionSummaryModal } from './components/SessionSummaryModal';
 import { TodayTab } from './components/TodayTab';
 import { WorkoutTab } from './components/WorkoutTab';
+import { AuthSyncProvider, useAuthSync } from './context/AuthSyncContext';
 import { useActivityRecognition } from './hooks/useActivityRecognition';
 import { useBluetoothHeartRate } from './hooks/useBluetoothHeartRate';
 import { useCalorieBurn } from './hooks/useCalorieBurn';
@@ -22,9 +23,9 @@ import { useLocationTracker } from './hooks/useLocationTracker';
 import { useUserProfile } from './hooks/useUserProfile';
 import { useWakeLock } from './hooks/useWakeLock';
 import { useWorkoutHistory } from './hooks/useWorkoutHistory';
-import { WorkoutSession } from './types/fitness';
+import { UserProfile, WorkoutSession } from './types/fitness';
 
-export default function App() {
+function FitTrackApp() {
   const [activeTab, setActiveTab] = useState<TabType>('today');
   const [isWorkoutActive, setIsWorkoutActive] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -36,6 +37,9 @@ export default function App() {
   const [finishedSession, setFinishedSession] = useState<WorkoutSession | null>(null);
   const [isQuotaExceeded, setIsQuotaExceeded] = useState<boolean>(false);
 
+  // Auth & Cloud Sync Context
+  const { user, syncData } = useAuthSync();
+
   // Google Maps Quota Listener
   useEffect(() => {
     const handleQuota = () => setIsQuotaExceeded(true);
@@ -43,8 +47,8 @@ export default function App() {
     return () => window.removeEventListener('gmp-quota-exceeded', handleQuota);
   }, []);
 
-  // Persistent user profile
-  const { profile, updateProfile, resetProfile } = useUserProfile();
+  // Persistent user profile with IndexedDB support
+  const { profile, updateProfile, resetProfile, hydrateProfile } = useUserProfile();
 
   // Hardware and Sensor Hooks
   const bluetoothState = useBluetoothHeartRate();
@@ -114,8 +118,19 @@ export default function App() {
     deleteSession,
     clearAllSessions,
     loadSampleSessions,
+    hydrateSessions,
     getWeeklyData,
   } = useWorkoutHistory();
+
+  // Initial Sync when user logs in
+  useEffect(() => {
+    if (user) {
+      syncData(profile, sessions, (remoteProfile, remoteSessions) => {
+        hydrateProfile(remoteProfile);
+        hydrateSessions(remoteSessions);
+      });
+    }
+  }, [user]);
 
   // Heart rate samples for the active session
   const [workoutHrSamples, setWorkoutHrSamples] = useState<{ timestamp: number; bpm: number }[]>([]);
@@ -226,10 +241,29 @@ export default function App() {
     addSession(session);
     setFinishedSession(null);
     setActiveTab('today');
+    const updatedSessions = [session, ...sessions];
+    syncData(profile, updatedSessions);
   };
 
   const handleDiscardFinishedSession = () => {
     setFinishedSession(null);
+  };
+
+  const handleDeleteSession = (id: string) => {
+    deleteSession(id);
+    const updatedSessions = sessions.filter((s) => s.id !== id);
+    syncData(profile, updatedSessions);
+  };
+
+  const handleClearAllSessions = () => {
+    clearAllSessions();
+    syncData(profile, []);
+  };
+
+  const handleUpdateProfile = (updates: Partial<UserProfile>) => {
+    const next = { ...profile, ...updates };
+    updateProfile(updates);
+    syncData(next, sessions);
   };
 
   // Filter today's completed sessions
@@ -279,6 +313,7 @@ export default function App() {
         isWorkoutActive={isWorkoutActive}
         isWakeLocked={isWakeLocked}
         onOpenWorkoutTab={() => setActiveTab('workout')}
+        onOpenProfileTab={() => setActiveTab('profile')}
       />
 
       {/* Main Content View Container */}
@@ -324,8 +359,8 @@ export default function App() {
             sessions={sessions}
             weeklyData={weeklyData}
             profile={profile}
-            onDeleteSession={deleteSession}
-            onClearAll={clearAllSessions}
+            onDeleteSession={handleDeleteSession}
+            onClearAll={handleClearAllSessions}
             onLoadSamples={loadSampleSessions}
           />
         )}
@@ -333,8 +368,11 @@ export default function App() {
         {activeTab === 'profile' && (
           <ProfileTab
             profile={profile}
-            onUpdateProfile={updateProfile}
+            sessions={sessions}
+            onUpdateProfile={handleUpdateProfile}
             onResetProfile={resetProfile}
+            onHydrateProfile={hydrateProfile}
+            onHydrateSessions={hydrateSessions}
           />
         )}
       </main>
@@ -366,5 +404,13 @@ export default function App() {
         isWorkoutActive={isWorkoutActive}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthSyncProvider>
+      <FitTrackApp />
+    </AuthSyncProvider>
   );
 }

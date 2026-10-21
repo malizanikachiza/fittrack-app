@@ -1,0 +1,39 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User biometric profile and settings",
+      "type": "object",
+      "properties": {
+        "age": { "type": "number", "description": "User age in years" },
+        "sex": { "type": "string", "enum": ["male", "female", "other"], "description": "Biological sex" },
+        "heightCm": { "type": "number", "description": "Height in centimeters" },
+        "weightKg": { "type": "number", "description": "Weight in kilograms" },
+        "dailyStepGoal": { "type": "number", "description": "Daily target steps" },
+        "dailyCalorieGoal": { "type": "number", "description": "Daily target active calories" },
+        "unitSystem": { "type": "string", "enum": ["metric", "imperial"], "description": "Preferred unit system" }
+      },
+      "required": ["age", "sex", "heightCm", "weightKg", "dailyStepGoal", "dailyCalorieGoal", "unitSystem"]
+    },
+    "UserCloudData": {
+      "title": "UserCloudData",
+      "description": "Aggregated user data stored under users/{uid}",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "profile": { "$ref": "#/entities/UserProfile" },
+        "workoutHistory": { "type": "array", "description": "History of workout sessions" },
+        "dailyTotals": { "type": "array", "description": "Aggregated daily workout totals" },
+        "lastSyncedAt": { "type": "number", "description": "Timestamp of last sync" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of document update" }
+      },
+      "required": ["uid", "profile"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "#/entities/UserCloudData",
+      "description": "Private user document storing profile, workout history, and daily totals"
+    }
+  }
+}

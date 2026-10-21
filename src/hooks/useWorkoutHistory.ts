@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react';
+import {
+  clearIDBWorkouts,
+  deleteIDBWorkout,
+  getIDBWorkouts,
+  saveIDBWorkout,
+  saveIDBWorkouts,
+} from '../services/indexedDb';
 import { DailySummary, WorkoutSession } from '../types/fitness';
 
 const STORAGE_KEY = 'fittrack_workout_sessions_v1';
 
-// Initial mock data if empty, giving immediate rich visuals on first launch
+// Initial sample data if completely empty
 const SAMPLE_SESSIONS: WorkoutSession[] = [
   {
     id: 'sample-1',
@@ -92,28 +99,57 @@ export function useWorkoutHistory() {
     return SAMPLE_SESSIONS;
   });
 
+  // On mount, load from IndexedDB or seed it
+  useEffect(() => {
+    let isMounted = true;
+    getIDBWorkouts().then((idbSessions) => {
+      if (isMounted) {
+        if (idbSessions && idbSessions.length > 0) {
+          setSessions(idbSessions);
+        } else {
+          // Seed IndexedDB with initial sessions
+          saveIDBWorkouts(sessions);
+        }
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Sync to localStorage whenever sessions change
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+      saveIDBWorkouts(sessions);
     } catch (e) {
-      console.warn('Failed to save workout sessions to localStorage:', e);
+      console.warn('Failed to save workout sessions:', e);
     }
   }, [sessions]);
 
   const addSession = (session: WorkoutSession) => {
     setSessions((prev) => [session, ...prev]);
+    saveIDBWorkout(session);
   };
 
   const deleteSession = (id: string) => {
     setSessions((prev) => prev.filter((s) => s.id !== id));
+    deleteIDBWorkout(id);
   };
 
   const clearAllSessions = () => {
     setSessions([]);
+    clearIDBWorkouts();
   };
 
   const loadSampleSessions = () => {
     setSessions(SAMPLE_SESSIONS);
+    saveIDBWorkouts(SAMPLE_SESSIONS);
+  };
+
+  const hydrateSessions = (newSessions: WorkoutSession[]) => {
+    setSessions(newSessions);
+    saveIDBWorkouts(newSessions);
   };
 
   // Aggregated totals for today
@@ -134,7 +170,7 @@ export function useWorkoutHistory() {
       steps: savedSteps + liveSteps,
       calories: Math.round((savedCalories + liveCalories) * 10) / 10,
       activeMinutes: Math.round(savedDurationSecs / 60),
-      distanceKm: Math.round(((savedDistanceMeters) / 1000) * 100) / 100,
+      distanceKm: Math.round((savedDistanceMeters / 1000) * 100) / 100,
     };
   };
 
@@ -192,6 +228,7 @@ export function useWorkoutHistory() {
     deleteSession,
     clearAllSessions,
     loadSampleSessions,
+    hydrateSessions,
     getTodaySummary,
     getWeeklyData,
   };

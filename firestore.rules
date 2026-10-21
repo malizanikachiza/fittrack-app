@@ -1,0 +1,54 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User document validation under /users/{userId}
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false; // Blanket listing forbidden; query must be targeted by userId
+
+      allow create: if isOwner(userId) 
+        && isValidId(userId)
+        && incoming().uid == userId
+        && incoming().profile is map;
+
+      allow update: if isOwner(userId) 
+        && isValidId(userId)
+        && incoming().uid == existing().uid
+        && incoming().profile is map;
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // Subcollections under users/{userId} (e.g. granular workouts or summaries)
+      match /{allSubcollections=**} {
+        allow read, write: if isOwner(userId) && isValidId(userId);
+      }
+    }
+  }
+}
